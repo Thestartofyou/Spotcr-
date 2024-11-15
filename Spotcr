@@ -1,0 +1,41 @@
+import requests
+import pandas as pd
+import folium
+from datetime import datetime
+
+# API endpoint for crime data (replace with a real API endpoint)
+API_URL = "https://data.cityname.gov/resource/abcd-1234.json"  # Placeholder URL
+API_KEY = "your_api_key_here"  # Replace if required
+
+# Define parameters for fetching data (adjust to API documentation)
+params = {
+    "$limit": 100,  # Number of records to fetch
+    "$where": f"date > '{(datetime.now() - pd.DateOffset(days=30)).strftime('%Y-%m-%d')}'",  # Last 30 days
+}
+
+# Fetch data from the API
+response = requests.get(API_URL, headers={"Authorization": API_KEY}, params=params)
+data = response.json()
+
+# Convert to a DataFrame
+df = pd.DataFrame(data)
+
+# Display the first few rows
+print(df.head())
+
+# Initialize a map centered on the city
+m = folium.Map(location=[42.3601, -71.0589], zoom_start=12)  # Example coordinates (Boston)
+
+# Add crime data points to the map
+for _, row in df.iterrows():
+    lat, lon = row['latitude'], row['longitude']
+    crime_type = row['offense_description']  # Change to actual column name
+    folium.Marker(
+        location=[lat, lon],
+        popup=f"Crime: {crime_type}\nDate: {row['date']}",  # Customize based on available columns
+        icon=folium.Icon(color="red", icon="info-sign"),
+    ).add_to(m)
+
+# Save or display the map
+m.save("crime_map.html")
+print("Map has been generated as crime_map.html")
